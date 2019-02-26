@@ -82,7 +82,7 @@ func TestNextToken2(t *testing.T) {
 	};
 	let result = add(five, ten);
 	!-/*5;
-	5 < 10 > 5;
+	5 < 10 > 5; if else if else
 	`
 
 	tests := []struct {
@@ -138,6 +138,10 @@ func TestNextToken2(t *testing.T) {
 		{token.GT, ">"},
 		{token.INT, "5"},
 		{token.SEMICOLON, ";"},
+		{token.IF, "if"},
+		{token.ELSE, "else"},
+		{token.IF, "if"},
+		{token.ELSE, "else"},
 		{token.EOF, ""},
 	}
 	l := New(input)
