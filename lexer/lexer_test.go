@@ -160,3 +160,56 @@ func TestNextToken2(t *testing.T) {
 		}
 	}
 }
+
+func TestNextToken3(t *testing.T) {
+	input := `if (5 != 10) {
+		return true;
+	} else if (5 == 10){
+		return false;
+	}
+	`
+
+	tests := []struct {
+		expextedType    token.TokenType
+		expextedLiteral string
+	}{
+		{token.IF, "if"},
+		{token.LPAREN, "("},
+		{token.INT, "5"},
+		{token.NEQ, "!="},
+		{token.INT, "10"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.RETURN, "return"},
+		{token.TRUE, "true"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+		{token.ELSE, "else"},
+		{token.IF, "if"},
+		{token.LPAREN, "("},
+		{token.INT, "5"},
+		{token.EQ, "=="},
+		{token.INT, "10"},
+		{token.RPAREN, ")"},
+		{token.LBRACE, "{"},
+		{token.RETURN, "return"},
+		{token.FALSE, "false"},
+		{token.SEMICOLON, ";"},
+		{token.RBRACE, "}"},
+	}
+	l := New(input)
+
+	for i, tt := range tests {
+		// get next token from character stream
+		tok := l.NextToken()
+		fmt.Println(tok.Literal)
+
+		if tok.Type != tt.expextedType {
+			t.Fatalf("tests[%d] - token type wrong, expected=%q, actual=%q", i, tt.expextedType, tok.Type)
+		}
+
+		if tok.Literal != tt.expextedLiteral {
+			t.Fatalf("tests[%d] - literal wrong, expected=%q, actual=%q", i, tt.expextedLiteral, tok.Literal)
+		}
+	}
+}
