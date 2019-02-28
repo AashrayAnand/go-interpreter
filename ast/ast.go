@@ -1,6 +1,9 @@
 package ast
 
-import "go-interpreter/token"
+import (
+	"bytes"
+	"go-interpreter/token"
+)
 
 // LetStatement : represents a let statement, comprised of
 // a token, the identifier that is binded to, and the right
@@ -12,23 +15,76 @@ type LetStatement struct {
 }
 
 type ReturnStatement struct {
-	Token token.Token // token.RETURN token
-	Value Expression  // expression that is being returned
+	Token       token.Token // token.RETURN token
+	ReturnValue Expression  // expression that is being returned
+}
+
+type ExpressionStatement struct {
+	Token      token.Token // the first token of the expression
+	Expression Expression  //
 }
 
 // dummy methods which will result in these structs
 // implementing the Statement interface
-func (ls *LetStatement) statementNode()    {}
-func (ls *ReturnStatement) statementNode() {}
+func (ls *LetStatement) statementNode()        {}
+func (rs *ReturnStatement) statementNode()     {}
+func (es *ExpressionStatement) statementNode() {}
 
-// TokenLiteral : get literal value of statement from token
+// TokenLiteral functions to satisfy Node interface
 func (ls *LetStatement) TokenLiteral() string {
 	return ls.Token.Literal
 }
 
-// TokenLiteral : get literal value of statement from token
-func (ls *ReturnStatement) TokenLiteral() string {
-	return ls.Token.Literal
+func (rs *ReturnStatement) TokenLiteral() string {
+	return rs.Token.Literal
+}
+func (es *ExpressionStatement) TokenLiteral() string {
+	return es.Token.Literal
+}
+
+// String functions to satisfy node interface
+
+func (ls *LetStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ls.Token.Literal + " ")
+	out.WriteString(ls.Name.String())
+	out.WriteString(" = ")
+	if ls.Value != nil {
+		out.WriteString(ls.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+func (rs *ReturnStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(rs.TokenLiteral() + " ")
+	if rs.ReturnValue != nil {
+		out.WriteString(rs.ReturnValue.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
+
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+	return ""
+}
+
+func (i *Identifier) String() string { return i.Value }
+
+func (p *Program) String() string {
+	var out bytes.Buffer
+
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
 }
 
 // Identifier : represents an identifier
@@ -51,6 +107,7 @@ func (i *Identifier) TokenLiteral() string {
 // returns the literal value of a token
 type Node interface {
 	TokenLiteral() string
+	String() string
 }
 
 // Statements do not return a value

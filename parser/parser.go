@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"go-interpreter/ast"
 	"go-interpreter/lexer"
 	"go-interpreter/token"
@@ -11,6 +12,8 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+
+	errors []string
 }
 
 // advance current and peeking token, pointing curToken
@@ -30,6 +33,7 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		p.nextToken()
 		return true
 	}
+	p.peekError(t)
 	return false
 }
 
@@ -41,6 +45,13 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 // check if next token is expected type
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
+}
+
+func (p *Parser) peekError(t token.TokenType) {
+	msg := fmt.Sprintf("expected next token to be %s, got %s", t, p.peekToken.Type)
+	// add new syntax error to list of errors
+	p.errors = append(p.errors, msg)
+
 }
 
 // parse a let statement
@@ -109,8 +120,15 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
 func New(l *lexer.Lexer) Parser {
-	p := Parser{l: l}
+	p := Parser{
+		l:      l,
+		errors: []string{},
+	}
 
 	// get first two tokens, place them into curr
 	// and peek token positions

@@ -6,6 +6,18 @@ import (
 	"testing"
 )
 
+func checkParserErrors(t *testing.T, p Parser) {
+	errors := p.errors
+	if len(errors) == 0 {
+		return
+	}
+	t.Errorf("parser had %d errors", len(errors))
+	for _, msg := range errors {
+		t.Errorf("parser error: %q", msg)
+	}
+	t.FailNow()
+}
+
 func TestLetStatements(t *testing.T) {
 	input := `
 				let x = 5;
@@ -18,6 +30,7 @@ func TestLetStatements(t *testing.T) {
 	p := New(l)
 
 	program := p.ParseProgram()
+	checkParserErrors(t, p)
 	if program == nil {
 		t.Fatalf("ParseProgram() returns nil")
 	}
@@ -79,6 +92,7 @@ func TestReturnStatements(t *testing.T) {
 	p := New(l)
 
 	program := p.ParseProgram()
+	checkParserErrors(t, p)
 	if program == nil {
 		t.Fatalf("ParseProgram() returns nil")
 	}
@@ -86,26 +100,26 @@ func TestReturnStatements(t *testing.T) {
 		t.Fatalf("program.Statements does not contain 3 statements. got=%d",
 			len(program.Statements))
 	}
-	tests := []struct {
+	/*tests := []struct {
 		expectedIdentifier string
 	}{
-		{"return"},
-		{"return"},
-		{"return"},
+		{"return 5"},
+		{"return 10"},
+		{"return 9999"},
+	}*/
+
+	if len(program.Statements) != 3 {
+		t.Errorf("program does not contain 3 statements. got=%d", len(program.Statements))
 	}
 
-	for i, tt := range tests {
-		stmt := program.Statements[i]
-		if !testReturnStatement(t, stmt, tt.expectedIdentifier) {
-			return
+	for _, stmt := range program.Statements {
+		returnStmt, ok := stmt.(*ast.ReturnStatement)
+		if !ok {
+			t.Errorf("not a return statement. got=%T", stmt)
+			continue
+		}
+		if returnStmt.TokenLiteral() != "return" {
+			t.Errorf("s.TokenLiteral not 'return'. got=%q", returnStmt.TokenLiteral())
 		}
 	}
-}
-
-func testReturnStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "return" {
-		t.Errorf("s.TokenLiteral not 'return'. got=%q", s.TokenLiteral())
-		return false
-	}
-	return true
 }
