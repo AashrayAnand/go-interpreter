@@ -7,11 +7,13 @@ import (
 // Lexer : lexer struct
 type Lexer struct {
 	input        string
-	position     int  // current position in input (points to char)
-	readPosition int  // current reading position in input (after current char)
-	ch           byte // current char under examination
+	position     int // current position in input (points to char)
+	readPosition int // current reading position in input (after current char)
+	// this is used to peek to the next char, if needed e.g.
+	// to see if a second '=' comes after an '=' char
+	ch byte // current char under examination
 
-	// position is what we just read, readPosition is what we will read nex
+	// position is what we just read, readPosition is what we will read next
 }
 
 // New : create new lexer
@@ -25,8 +27,10 @@ func New(input string) *Lexer {
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
+	// read characters until we have reached a non-whitespace character
 	l.skipWhiteSpace()
 
+	// different cases for character we encounter
 	switch l.ch {
 	case '=':
 		// check if next 2 tokens form equals operator
@@ -77,6 +81,8 @@ func (l *Lexer) NextToken() token.Token {
 	default:
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
+			// lookup the identifier, return special types for
+			// keywords (if,else..), otherwise IDENT
 			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else if isNumber(l.ch) {
@@ -87,6 +93,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	}
+	// read next character
 	l.readChar()
 	return tok
 }

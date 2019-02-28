@@ -11,12 +11,23 @@ type LetStatement struct {
 	Value Expression  // right side of the let statement, can be any expression
 }
 
-// dummy method which will result in LetStatement
-// implementing the Statement interface
-func (ls *LetStatement) statementNode() {}
+type ReturnStatement struct {
+	Token token.Token // token.RETURN token
+	Value Expression  // expression that is being returned
+}
 
-// TokenLiteral : get literal value of let statement, from token
+// dummy methods which will result in these structs
+// implementing the Statement interface
+func (ls *LetStatement) statementNode()    {}
+func (ls *ReturnStatement) statementNode() {}
+
+// TokenLiteral : get literal value of statement from token
 func (ls *LetStatement) TokenLiteral() string {
+	return ls.Token.Literal
+}
+
+// TokenLiteral : get literal value of statement from token
+func (ls *ReturnStatement) TokenLiteral() string {
 	return ls.Token.Literal
 }
 
