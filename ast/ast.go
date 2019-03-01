@@ -24,11 +24,20 @@ type ExpressionStatement struct {
 	Expression Expression  //
 }
 
+type IntegerLiteral struct {
+	Token token.Token // token.INT
+	Value int64
+}
+
 // dummy methods which will result in these structs
 // implementing the Statement interface
 func (ls *LetStatement) statementNode()        {}
 func (rs *ReturnStatement) statementNode()     {}
 func (es *ExpressionStatement) statementNode() {}
+
+// dummy methods which will result in these structs
+// implementing the statement interface
+func (il *IntegerLiteral) expressionNode() {}
 
 // TokenLiteral functions to satisfy Node interface
 func (ls *LetStatement) TokenLiteral() string {
@@ -42,12 +51,19 @@ func (es *ExpressionStatement) TokenLiteral() string {
 	return es.Token.Literal
 }
 
+func (il *IntegerLiteral) TokenLiteral() string {
+	return il.Token.Literal
+}
+
 // String functions to satisfy node interface
 
 func (ls *LetStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(ls.Token.Literal + " ")
+	// returns a concatenation of the token literal
+	// value ("let") + Name (identifier value e.g. "x") and
+	// the value (expression to string) e.g. "let x = ..."
+	out.WriteString(ls.TokenLiteral() + " ")
 	out.WriteString(ls.Name.String())
 	out.WriteString(" = ")
 	if ls.Value != nil {
@@ -60,6 +76,9 @@ func (ls *LetStatement) String() string {
 func (rs *ReturnStatement) String() string {
 	var out bytes.Buffer
 
+	// returns a concatenation of token literal
+	// value ("return") + ReturnValue (expression to string)
+	// e.g. "return ..."
 	out.WriteString(rs.TokenLiteral() + " ")
 	if rs.ReturnValue != nil {
 		out.WriteString(rs.ReturnValue.String())
@@ -68,11 +87,16 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
+// returns expression as a string value
 func (es *ExpressionStatement) String() string {
 	if es.Expression != nil {
 		return es.Expression.String()
 	}
 	return ""
+}
+
+func (il *IntegerLiteral) String() string {
+	return il.Token.Literal
 }
 
 func (i *Identifier) String() string { return i.Value }
