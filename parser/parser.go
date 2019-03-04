@@ -55,6 +55,12 @@ func (p *Parser) addInfixParseFn(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
+// error when no prefix parse function found
+func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	p.errors = append(p.errors, msg)
+}
+
 // advance current and peeking token, pointing curToken
 // at peekToken, and calling NextToken on our lexer to
 // get the peek token
@@ -132,12 +138,14 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	// get prefix parsing function for current type
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
+
 	leftExp := prefix()
+	p.nextToken()
 
 	return leftExp
 }
@@ -147,9 +155,10 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	// set the Expression to be the left side of the expression
+	// e.g. 5 in "5;", "foobar" in "foobar;"
+	// go to next token if we reach a semicolon
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	// go to next token if we reach a semicolon
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -174,6 +183,18 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	il.Value = value
 	return il
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+	p.nextToken()
+
+	expression.Right = p.parseExpression(PREFIX)
+
+	return expression
 }
 
 func (p *Parser) parseStatement() ast.Statement {
@@ -219,6 +240,8 @@ func New(l *lexer.Lexer) Parser {
 	// bind identifier parse function to identifier token
 	p.addPrefixParseFn(token.IDENT, p.parseIdentifier)
 	p.addPrefixParseFn(token.INT, p.parseIntegerLiteral)
+	p.addPrefixParseFn(token.BANG, p.parsePrefixExpression)
+	p.addPrefixParseFn(token.MINUS, p.parsePrefixExpression)
 	// get first two tokens, place them into curr
 	// and peek token positions
 	p.nextToken()

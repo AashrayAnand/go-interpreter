@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"go-interpreter/ast"
 	"go-interpreter/lexer"
 	"testing"
@@ -21,6 +22,7 @@ func checkParserErrors(t *testing.T, p Parser) {
 func TestLetStatements(t *testing.T) {
 	input := `
 				let x = 5;
+
 				let y = 10;
 				let foobar = 838383;
 				`
@@ -173,7 +175,7 @@ func TestIntegerLiteralExpression(t *testing.T) {
 
 	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
 	if !ok {
-		t.Fatalf("literal is not an integeral literal. got=%T", stmt.Expression)
+		t.Fatalf("value is not an integeral literal. got=%T", stmt.Expression)
 	}
 
 	if literal.Value != 5 {
@@ -182,4 +184,60 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	if literal.TokenLiteral() != "5" {
 		t.Fatalf("litera.TokenLiteral() got=%s, expected \"5\"", literal.TokenLiteral())
 	}
+}
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5;", "!", 5},
+		{"-15;", "-", 15},
+	}
+	for _, tt := range prefixTests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain statements. got=%d", len(program.Statements))
+		}
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T",
+				program.Statements[0])
+		}
+		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
+		}
+		fmt.Println(exp)
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp operator is incorrect. got=%s. expected=%s", exp.Operator, tt.operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
+			t.Fatalf("integer literal is incorrect. got=%d. expected=%d", exp.Right, tt.integerValue)
+		}
+	}
+}
+
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) bool {
+	integ, ok := il.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("Not an integer literal. got=%T", il)
+		return false
+	}
+
+	if integ.Value != value {
+		t.Errorf("incorrect value. got=%d, expected=%d", integ.Value, value)
+		return false
+	}
+
+	if integ.TokenLiteral() != fmt.Sprintf("%d", value) {
+		t.Errorf("incorrect literal value. got=%s. expected=%d", integ.TokenLiteral(), value)
+	}
+
+	return true
 }
