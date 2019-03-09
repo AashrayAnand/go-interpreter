@@ -35,6 +35,13 @@ type PrefixExpression struct {
 	Right    Expression
 }
 
+type InfixExpression struct {
+	Token    token.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
 // dummy methods which will result in these structs
 // implementing the Statement interface
 func (ls *LetStatement) statementNode()        {}
@@ -45,6 +52,7 @@ func (es *ExpressionStatement) statementNode() {}
 // implementing the statement interface
 func (il *IntegerLiteral) expressionNode()   {}
 func (pe *PrefixExpression) expressionNode() {}
+func (ie *InfixExpression) expressionNode()  {}
 
 // TokenLiteral functions to satisfy Node interface
 func (ls *LetStatement) TokenLiteral() string {
@@ -64,6 +72,10 @@ func (il *IntegerLiteral) TokenLiteral() string {
 
 func (pe *PrefixExpression) TokenLiteral() string {
 	return pe.Token.Literal
+}
+
+func (ie *InfixExpression) TokenLiteral() string {
+	return ie.Token.Literal
 }
 
 // String functions to satisfy node interface
@@ -117,6 +129,18 @@ func (pe *PrefixExpression) String() string {
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String())
 	out.WriteString(")")
+	return out.String()
+}
+
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(ie.Operator)
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
 	return out.String()
 }
 
